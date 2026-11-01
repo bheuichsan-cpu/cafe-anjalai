@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Desain — Cafe Tepi Danau Anjalai</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #090d16;
+            color: #f1f5f9;
+            line-height: 1.5;
+            padding: 24px 16px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            max-width: 720px;
+            width: 100%;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 28px;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .badge {
+            display: inline-block;
+            background: rgba(56, 189, 248, 0.15);
+            color: #38bdf8;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+        h1 {
+            font-size: 24px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+        p.subtitle {
+            font-size: 13px;
+            color: #94a3b8;
+        }
+        .primary-cta {
+            display: block;
+            background: linear-gradient(135deg, #0284c7, #0369a1);
+            color: #ffffff;
+            text-decoration: none;
+            padding: 18px 24px;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 16px;
+            text-align: center;
+            box-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 24px;
+            border: 1px solid rgba(56, 189, 248, 0.4);
+        }
+        .primary-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 30px -5px rgba(2, 132, 199, 0.6);
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        @media (min-width: 600px) {
+            .grid { grid-template-columns: 1fr 1fr; }
+        }
+        .card {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            overflow: hidden;
+            text-decoration: none;
+            color: inherit;
+            transition: 0.2s;
+            display: flex;
+            flex-direction: column;
+        }
+        .card:hover {
+            border-color: #38bdf8;
+            transform: translateY(-2px);
+        }
+        .card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            display: block;
+            background: #0f172a;
+        }
+        .card-body {
+            padding: 14px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .card-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #f8fafc;
+            margin-bottom: 4px;
+        }
+        .card-desc {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-bottom: 10px;
+        }
+        .card-link {
+            font-size: 12px;
+            font-weight: 600;
+            color: #38bdf8;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .footer {
+            text-align: center;
+            font-size: 11px;
+            color: #64748b;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="badge">Live Online Project Preview</div>
+            <h1>Cafe Tepi Danau Anjalai</h1>
+            <p class="subtitle">Danau Diatas, Alahan Panjang, Sumatera Barat (Elevasi 1.560 mdpl)</p>
+        </div>
+
+        <a class="primary-cta" href="./MODEL_3D_INTERAKTIF_CAFE_ANJALAI.html">
+            🌐 Buka Model 3D Interaktif (360° View)
+            <div style="font-size: 12px; font-weight: 400; opacity: 0.9; margin-top: 4px;">Putar bebas, zoom, cek detail lampu, kisi-kisi dinding & kedua pintu</div>
+        </a>
+
+        <div class="grid">
+            <a class="card" href="./VISUAL_INTERIOR_CAFE_3D.jpg" target="_blank">
+                <img src="./VISUAL_INTERIOR_CAFE_3D.jpg" alt="Visual Interior Cafe 3D">
+                <div class="card-body">
+                    <div>
+                        <div class="card-title">☕ Visual Interior 8K Fotorealistis</div>
+                        <div class="card-desc">Lantai keramik greige satin, 3 lampu gantung bar, kisi-kisi kayu & view danau.</div>
+                    </div>
+                    <div class="card-link">Lihat Resolusi Penuh 8K ↗</div>
+                </div>
+            </a>
+
+            <a class="card" href="./VISUAL_EKSTERIOR_CAFE_3D.jpg" target="_blank">
+                <img src="./VISUAL_EKSTERIOR_CAFE_3D.jpg" alt="Visual Eksterior Cafe 3D">
+                <div class="card-body">
+                    <div>
+                        <div class="card-title">🌅 Visual Eksterior Dek Danau 8K</div>
+                        <div class="card-desc">Fasad kaca pantul, dek kantilever WPC, meja bar outdoor tepi air & pegunungan.</div>
+                    </div>
+                    <div class="card-link">Lihat Resolusi Penuh 8K ↗</div>
+                </div>
+            </a>
+
+            <a class="card" href="./DENAH_TATA_LETAK_CAFE_2D.jpg" target="_blank">
+                <img src="./DENAH_TATA_LETAK_CAFE_2D.jpg" alt="Denah Tata Letak 2D">
+                <div class="card-body">
+                    <div>
+                        <div class="card-title">📐 Denah Tata Letak 2D Masterplan</div>
+                        <div class="card-desc">Denah arsitektural ukuran presisi, sirkulasi, zona indoor 50 pax & outdoor 40 pax.</div>
+                    </div>
+                    <div class="card-link">Lihat Denah 2D ↗</div>
+                </div>
+            </a>
+
+            <a class="card" href="./MODEL_3D_CAFE_ANJALAI.obj" target="_blank">
+                <div style="height: 180px; background: #0f172a; display: flex; align-items: center; justify-content: center; font-size: 48px;">
+                    📦
+                </div>
+                <div class="card-body">
+                    <div>
+                        <div class="card-title">📦 File CAD 3D (.OBJ & .MTL)</div>
+                        <div class="card-desc">File 3D universal untuk SketchUp, Blender, Revit, AutoCAD 3D.</div>
+                    </div>
+                    <div class="card-link">Unduh File OBJ (21 KB) ↗</div>
+                </div>
+            </a>
+        </div>
+
+        <div class="footer">
+            Cafe Tepi Danau Anjalai &bull; Main Brain Project Intelligence &bull; Akses Online Aktif
+        </div>
+    </div>
+</body>
+</html>

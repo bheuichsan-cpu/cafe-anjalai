@@ -1,0 +1,22 @@
+newmtl matConcrete
+Kd 0.58 0.64 0.72
+newmtl matWood
+Kd 0.70 0.32 0.04
+newmtl matCabinet
+Kd 0.24 0.14 0.08
+newmtl matSteel
+Kd 0.08 0.08 0.08
+newmtl matGlass
+Kd 0.60 0.84 0.92
+d 0.55
+newmtl matWPC
+Kd 0.24 0.16 0.09
+newmtl matBanquette
+Kd 0.12 0.23 0.37
+newmtl matBarStool
+Kd 0.95 0.95 0.95
+newmtl matParasol
+Kd 0.12 0.16 0.23
+newmtl matWater
+Kd 0.05 0.45 0.56
+d 0.85

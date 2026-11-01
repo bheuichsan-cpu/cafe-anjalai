@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Model 3D Cafe Anjalai — Realistis Mirip Dunia Nyata (Dua Pintu Jelas & Detail Lengkap)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #060911; color: #f1f5f9; overflow: hidden; width: 100vw; height: 100vh; touch-action: none; }
+        #canvas-container { width: 100%; height: 100%; display: block; position: absolute; top: 0; left: 0; z-index: 1; }
+        
+        /* Top Navigation Header */
+        .header-bar {
+            position: absolute; top: 12px; left: 16px; right: 16px;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 18px; background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 12px; z-index: 100;
+        }
+        .header-title h1 { font-size: 15px; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
+        .header-title p { font-size: 11px; color: #94a3b8; }
+        .badge-live { display: inline-block; padding: 2px 7px; border-radius: 10px; background: #22c55e; color: #000; font-weight: 700; font-size: 9px; }
+        
+        .top-btn-group { display: flex; gap: 6px; }
+        .btn-top {
+            background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #f8fafc; padding: 6px 12px; border-radius: 8px; font-size: 11px; cursor: pointer; transition: 0.2s;
+        }
+        .btn-top:hover, .btn-top.active { background: #0284c7; color: #fff; border-color: #38bdf8; }
+
+        /* Compact Floating Controls & Camera Dropdown */
+        .controls-panel {
+            position: absolute; top: 76px; left: 16px; width: 280px; max-height: calc(100vh - 160px); overflow-y: auto;
+            background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(18px);
+            border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 14px; padding: 12px; z-index: 90;
+            box-shadow: 0 12px 35px rgba(0,0,0,0.65); transition: all 0.25s ease;
+        }
+        .panel-heading { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; font-weight: 700; margin-bottom: 6px; }
+        
+        /* Modern Native-Enhanced Dropdown */
+        .cam-select-wrap {
+            position: relative; width: 100%; margin-bottom: 10px;
+        }
+        .cam-dropdown {
+            width: 100%; appearance: none; -webkit-appearance: none;
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95));
+            border: 1.5px solid #38bdf8; border-radius: 10px;
+            color: #ffffff; padding: 10px 34px 10px 12px; font-size: 12px; font-weight: 600;
+            cursor: pointer; outline: none; transition: 0.2s;
+            box-shadow: 0 4px 15px rgba(2, 132, 199, 0.25);
+        }
+        .cam-dropdown:hover, .cam-dropdown:focus {
+            border-color: #0284c7; background: rgba(30, 41, 59, 1);
+            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4);
+        }
+        .cam-select-arrow {
+            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+            color: #38bdf8; font-size: 11px; pointer-events: none; font-weight: 800;
+        }
+        
+        .btn-toggle-advanced {
+            width: 100%; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #94a3b8; font-size: 10px; font-weight: 600; padding: 5px; border-radius: 6px;
+            cursor: pointer; margin-top: 4px; transition: 0.15s;
+        }
+        .btn-toggle-advanced:hover { color: #f8fafc; background: rgba(255, 255, 255, 0.12); }
+
+        /* Floating Restore UI Button */
+        #btn-restore-ui {
+            display: none; position: absolute; top: 14px; right: 14px; z-index: 105;
+            background: rgba(15, 23, 42, 0.90); border: 1.5px solid #38bdf8;
+            color: #38bdf8; padding: 8px 14px; border-radius: 20px; font-size: 12px; font-weight: 700;
+            cursor: pointer; box-shadow: 0 6px 20px rgba(0,0,0,0.5); backdrop-filter: blur(12px);
+        }
+
+        /* Quick Bottom Toolbar */
+        .quick-toolbar {
+            position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+            display: flex; align-items: center; gap: 8px; padding: 8px 14px;
+            background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(18px);
+            border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 30px; z-index: 90;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.6);
+        }
+        .tool-btn {
+            background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #f1f5f9; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
+            cursor: pointer; display: flex; align-items: center; gap: 5px; transition: 0.15s;
+        }
+        .tool-btn:hover, .tool-btn.active { background: #0284c7; color: #fff; border-color: #38bdf8; }
+        
+        .help-banner {
+            position: absolute; bottom: 68px; left: 50%; transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(12px);
+            padding: 5px 14px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 11px; color: #94a3b8; pointer-events: none; z-index: 85; white-space: nowrap;
+        }
+        .help-banner strong { color: #38bdf8; }
+
+        .info-card {
+            position: absolute; top: 76px; right: 16px; width: 285px;
+            background: rgba(15, 23, 42, 0.90); backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 12px; padding: 12px 16px; z-index: 80; font-size: 11px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+        }
+        .spec-row { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+        .spec-val { font-weight: 600; color: #38bdf8; }
+
+        @media (max-width: 768px) {
+            /* 1. Sembunyikan Header Bar Teks Besar di HP agar TIDAK menutupi tombol sama sekali */
+            .header-bar, .info-card, .help-banner { display: none !important; }
+
+            /* 2. Controls Panel Jadi Single Floating Top Bar Ramping di HP (Tinggi cuma 40px, Plong 100%) */
+            .controls-panel {
+                top: 10px; left: 10px; right: 10px; width: auto; max-width: none;
+                padding: 4px 6px; border-radius: 12px; background: rgba(15, 23, 42, 0.92);
+                backdrop-filter: blur(16px); border: 1px solid rgba(56, 189, 248, 0.35);
+                box-shadow: 0 8px 25px rgba(0,0,0,0.7); display: flex; align-items: center; gap: 6px;
+                max-height: none; overflow: visible; z-index: 100;
+            }
+            .panel-heading { display: none; }
+            .cam-select-wrap { flex: 1; margin-bottom: 0; }
+            .cam-dropdown {
+                font-size: 12px; padding: 8px 28px 8px 10px; border-radius: 8px;
+                background: rgba(30, 41, 59, 0.95); height: 38px;
+            }
+            .cam-select-arrow { right: 10px; font-size: 10px; }
+
+            /* Tombol Cepat di HP bersebelahan dengan dropdown */
+            .btn-toggle-advanced {
+                width: auto; height: 38px; padding: 0 10px; margin-top: 0; font-size: 11px;
+                display: flex; align-items: center; justify-content: center; white-space: nowrap;
+                border-radius: 8px; background: rgba(30, 41, 59, 0.85);
+            }
+            #advanced-controls {
+                position: absolute; top: 48px; left: 0; right: 0;
+                background: rgba(15, 23, 42, 0.96); border: 1px solid rgba(56, 189, 248, 0.3);
+                border-radius: 12px; padding: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            }
+
+            /* Quick Toolbar di Bawah Layar */
+            .quick-toolbar {
+                width: calc(100% - 20px); left: 10px; transform: none; bottom: 10px;
+                padding: 6px 8px; gap: 6px; overflow-x: auto; justify-content: space-between;
+                border-radius: 16px;
+            }
+            .tool-btn { font-size: 11px; padding: 6px 10px; white-space: nowrap; flex: 1; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header-bar" id="header-bar">
+        <div class="header-title">
+            <h1>Model 3D Cafe Anjalai <span class="badge-live">REALISTIS & DUA PINTU JELAS</span></h1>
+            <p>Pintu Utama Samping & Pintu Danau Sangat Jelas | Tekstur PBR Alami | Pencahayaan Arsitektural</p>
+        </div>
+        <div class="top-btn-group">
+            <button class="btn-top" id="btn-auto-rotate">🔄 Putar Otomatis 360°</button>
+            <button class="btn-top" id="btn-reset">🎯 Reset Posisi</button>
+            <button class="btn-top" id="btn-screenshot">📷 Foto 3D</button>
+        </div>
+    </div>
+
+    <div class="controls-panel" id="controls-panel">
+        <p class="panel-heading">📷 SUDUT PANDANG KAMERA (DROPDOWN)</p>
+        <div class="cam-select-wrap">
+            <select id="camera-select" class="cam-dropdown">
+                <option value="entrance" selected>🚪 Pintu Masuk Utama (Samping)</option>
+                <option value="deck">🌅 Pintu & Dek Danau (+3.00m)</option>
+                <option value="interior">🛋️ Dari Dalam Menatap Danau</option>
+                <option value="bar">☕ Meja Bar & Mesin Kopi</option>
+                <option value="banquette">🛋️ Sofa Bench Dinding 13.8M</option>
+                <option value="sidedeck">🌿 Dek Samping Jalan & Payung</option>
+                <option value="lake">🌊 Tampak Luar Danau (Dua Lantai)</option>
+                <option value="top">📐 Tampak Atas (Denah 2D)</option>
+            </select>
+            <div class="cam-select-arrow">▼</div>
+        </div>
+
+        <button class="btn-toggle-advanced" id="btn-toggle-advanced">⚙️ Opsi Plafon & Lapisan ▼</button>
+        <div id="advanced-controls" style="display:none; margin-top: 8px;">
+            <p class="panel-heading" style="margin-top: 8px;">SUDUT LENSA (WIDE)</p>
+            <div style="display:flex; gap:4px; margin-bottom: 10px;">
+                <button class="btn-top fov-btn" data-fov="55" style="flex:1;">55°</button>
+                <button class="btn-top fov-btn active" data-fov="78" style="flex:1;">78° Wide</button>
+                <button class="btn-top fov-btn" data-fov="92" style="flex:1;">92°</button>
+            </div>
+
+            <p class="panel-heading">KONTROL LAPISAN</p>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: #cbd5e1; cursor: pointer; margin-bottom: 6px;">
+                <input type="checkbox" id="toggle-roof"> 🔓 Buka Plafon (Lihat Dalam)
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: #cbd5e1; cursor: pointer; margin-bottom: 6px;">
+                <input type="checkbox" id="toggle-outdoor" checked> Furniture Outdoor
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: #cbd5e1; cursor: pointer; margin-bottom: 6px;">
+                <input type="checkbox" id="toggle-furniture" checked> Meja & Bar Indoor
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: #cbd5e1; cursor: pointer;">
+                <input type="checkbox" id="toggle-dims" checked> Label Teks
+            </label>
+        </div>
+    </div>
+
+    <!-- Floating Clean Full Screen Toggle Button -->
+    <button id="btn-restore-ui">👁️ Tampilkan Menu</button>
+
+    <div class="info-card" id="info-card">
+        <p style="font-weight: 700; color: #f8fafc; margin-bottom: 6px;">Akses Pintu & Kapasitas Kafe:</p>
+        <div class="spec-row"><span>Pintu 1 (Masuk Utama):</span> <span class="spec-val">Lebar 1.80m dari Dek Samping</span></div>
+        <div class="spec-row"><span>Pintu 2 (Akses Danau):</span> <span class="spec-val">Folding Door 2.50m ke Dek Air</span></div>
+        <div class="spec-row"><span>Dinding Kaca:</span> <span class="spec-val">Frame Baja Hitam Reflektif</span></div>
+        <div class="spec-row"><span>Kapasitas Indoor:</span> <span class="spec-val">50 Kursi (Banquette+Bar)</span></div>
+        <div class="spec-row"><span>Kapasitas Outdoor:</span> <span class="spec-val">~40 Kursi (Front + Side Deck)</span></div>
+        <div class="spec-row"><span>Total Kapasitas:</span> <span class="spec-val">~90 Kursi Nyaman</span></div>
+    </div>
+
+    <div class="help-banner">
+        💡 <strong>Navigasi 360°</strong>: 🖱️ Drag kiri / 1 jari: <strong>Putar Bebas</strong> • Scroll / cubit 2 jari: <strong>Zoom Maju/Mundur</strong> • Drag kanan / 2 jari: <strong>Geser Ruang</strong>
+    </div>
+
+    <div class="quick-toolbar" id="quick-toolbar">
+        <button class="tool-btn" id="btn-zoom-in">🔍+ Zoom Dekat</button>
+        <button class="tool-btn" id="btn-zoom-out">🔍- Zoom Jauh</button>
+        <button class="tool-btn" id="btn-toggle-wide">↔️ Lensa Wide (78°)</button>
+        <button class="tool-btn" id="btn-walkthrough">🚶 Masuk ke Dalam</button>
+        <button class="tool-btn" id="btn-clean-mode" style="border-color: #38bdf8; color: #38bdf8; font-weight: 700;">👁️ Layar Penuh</button>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <script>
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a101d);
+        scene.fog = new THREE.FogExp2(0x0a101d, 0.008);
+
+        let currentFov = 78;
+        const camera = new THREE.PerspectiveCamera(currentFov, window.innerWidth / window.innerHeight, 0.1, 700);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, powerPreference: "high-performance" });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.15;
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.08;
+        controls.rotateSpeed = 0.95;
+        controls.zoomSpeed = 1.3;
+        controls.panSpeed = 1.0;
+        controls.screenSpacePanning = true;
+        controls.minDistance = 0.3;
+        controls.maxDistance = 160.0;
+        controls.minPolarAngle = 0.02;
+        controls.maxPolarAngle = Math.PI - 0.05;
+        controls.autoRotate = false;
+        controls.autoRotateSpeed = 1.2;
+
+        let isTransitioning = false;
+        let transitionProgress = 0;
+        const startPos = new THREE.Vector3();
+        const startTarget = new THREE.Vector3();
+        const endPos = new THREE.Vector3();
+        const endTarget = new THREE.Vector3();
+
+        function transitionTo(pos, target) {
+            startPos.copy(camera.position);
+            startTarget.copy(controls.target);
+            endPos.copy(pos);
+            endTarget.copy(target);
+            transitionProgress = 0;
+            isTransitioning = true;
+        }
+
+        controls.addEventListener('start', () => { isTransitioning = false; });
+
+        // Atmospheric Sky Gradient Dome
+        const skyGeo = new THREE.SphereGeometry(350, 32, 15);
+        const skyMat = new THREE.ShaderMaterial({
+            uniforms: {
+                topColor: { value: new THREE.Color(0x1e3a8a) },
+                bottomColor: { value: new THREE.Color(0x94a3b8) },
+                offset: { value: 33 },
+                exponent: { value: 0.6 }
+            },
+            vertexShader: `
+                varying vec3 vWorldPosition;
+                void main() {
+                    vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+                    vWorldPosition = worldPosition.xyz;
+                    gl_Position = projectionMatrix * viewMatrix * worldPosition;
+                }
+            `,
+            fragmentShader: `
+                uniform vec3 topColor;
+                uniform vec3 bottomColor;
+                uniform float offset;
+                uniform float exponent;
+                varying vec3 vWorldPosition;
+                void main() {
+                    float h = normalize(vWorldPosition + offset).y;
+                    gl_FragColor = vec4(mix(bottomColor, topColor, max(pow(max(h, 0.0), exponent), 0.0)), 1.0);
+                }
+            `,
+            side: THREE.BackSide
+        });
+        scene.add(new THREE.Mesh(skyGeo, skyMat));
+
+        // Lighting
+        const ambLight = new THREE.AmbientLight(0xffffff, 0.82);
+        scene.add(ambLight);
+
+        const sunLight = new THREE.DirectionalLight(0xfffaed, 1.35);
+        sunLight.position.set(-18, 28, 22);
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.width = 2048; sunLight.shadow.mapSize.height = 2048;
+        sunLight.shadow.bias = -0.0004;
+        scene.add(sunLight);
+
+        // Warm Interior Accent Lights (3000K)
+        const intLight1 = new THREE.PointLight(0xffb74d, 1.6, 16);
+        intLight1.position.set(1.5, 2.7, 1.0);
+        scene.add(intLight1);
+
+        const intLight2 = new THREE.PointLight(0xffb74d, 1.4, 18);
+        intLight2.position.set(11.0, 2.7, 2.5);
+        scene.add(intLight2);
+
+        // Entrance Canopy Accent Light
+        const entLight = new THREE.PointLight(0xffd54f, 1.5, 7);
+        entLight.position.set(-0.65, 2.80, 2.80);
+        scene.add(entLight);
+
+        // PROCEDURAL REALISTIC TEXTURES
+        function makeWoodTexture(baseColor, lineAlpha = 0.12) {
+            const c = document.createElement('canvas'); c.width = 512; c.height = 512;
+            const ctx = c.getContext('2d');
+            ctx.fillStyle = baseColor; ctx.fillRect(0, 0, 512, 512);
+            for (let i = 0; i < 350; i++) {
+                ctx.fillStyle = '#000000'; ctx.globalAlpha = lineAlpha * (0.5 + Math.random());
+                const y = Math.random() * 512;
+                ctx.fillRect(0, y, 512, 1 + Math.random() * 2);
+            }
+            const tex = new THREE.CanvasTexture(c);
+            tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+            return tex;
+        }
+
+        function makeWPCTexture() {
+            const c = document.createElement('canvas'); c.width = 512; c.height = 512;
+            const ctx = c.getContext('2d');
+            ctx.fillStyle = '#3a2312'; ctx.fillRect(0, 0, 512, 512);
+            for (let x = 0; x < 512; x += 16) {
+                ctx.fillStyle = '#1f130a'; ctx.fillRect(x, 0, 2, 512);
+                ctx.fillStyle = '#4a2f1a'; ctx.fillRect(x + 2, 0, 14, 512);
+            }
+            const tex = new THREE.CanvasTexture(c);
+            tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+            tex.repeat.set(8, 4);
+            return tex;
+        }
+
+        function makeTerrazzoTexture() {
+            const c = document.createElement('canvas'); c.width = 512; c.height = 512;
+            const ctx = c.getContext('2d');
+            ctx.fillStyle = '#94a3b8'; ctx.fillRect(0, 0, 512, 512);
+            for (let i = 0; i < 1500; i++) {
+                ctx.fillStyle = Math.random() > 0.5 ? '#cbd5e1' : '#475569';
+                ctx.globalAlpha = 0.25 + Math.random() * 0.35;
+                ctx.fillRect(Math.random() * 512, Math.random() * 512, 2 + Math.random()*2, 2 + Math.random()*2);
+            }
+            const tex = new THREE.CanvasTexture(c);
+            tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+            tex.repeat.set(6, 4);
+            return tex;
+        }
+
+        // Procedural Ceramic Tile Texture Generator (Warm Greige / Limestone Marble with Precise Grout)
+        function makeCeramicTileTexture() {
+            const c = document.createElement('canvas'); c.width = 1024; c.height = 1024;
+            const ctx = c.getContext('2d');
+            // Base warm limestone greige
+            ctx.fillStyle = '#dcd8ce';
+            ctx.fillRect(0, 0, 1024, 1024);
+            const tileSize = 256;
+            const grout = 4;
+            for (let x = 0; x < 1024; x += tileSize) {
+                for (let y = 0; y < 1024; y += tileSize) {
+                    const offset = (Math.random() - 0.5) * 10;
+                    ctx.fillStyle = `rgb(${Math.round(225 + offset)}, ${Math.round(222 + offset)}, ${Math.round(214 + offset)})`;
+                    ctx.fillRect(x + grout/2, y + grout/2, tileSize - grout, tileSize - grout);
+                    for (let i = 0; i < 350; i++) {
+                        ctx.fillStyle = Math.random() > 0.5 ? '#cfcbbf' : '#eae7dd';
+                        ctx.globalAlpha = 0.25 + Math.random() * 0.3;
+                        ctx.fillRect(x + Math.random() * tileSize, y + Math.random() * tileSize, 1.5 + Math.random() * 2, 1.5 + Math.random() * 2);
+                    }
+                    ctx.globalAlpha = 1.0;
+                }
+            }
+            // Grout lines
+            ctx.strokeStyle = '#ada89b';
+            ctx.lineWidth = grout;
+            for (let x = 0; x <= 1024; x += tileSize) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 1024); ctx.stroke();
+            }
+            for (let y = 0; y <= 1024; y += tileSize) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(1024, y); ctx.stroke();
+            }
+            const tex = new THREE.CanvasTexture(c);
+            tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+            tex.repeat.set(8, 4); // ~60x60cm tile scale
+            return tex;
+        }
+
+        const texWood = makeWoodTexture('#b45309', 0.15);
+        const texWalnut = makeWoodTexture('#2d1a0e', 0.20);
+        const texWPC = makeWPCTexture();
+        const texTerrazzo = makeTerrazzoTexture();
+        const texCeramic = makeCeramicTileTexture();
+
+        // Realistic PBR Materials
+        // Lantai Keramik Mewah (Satin Semi-Gloss, Nat Presisi, Bebas Kedip)
+        const matFloor = new THREE.MeshStandardMaterial({ map: texCeramic, roughness: 0.28, metalness: 0.08 });
+        const matConcrete = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.85, metalness: 0.05 });
+        // BAGIAN BAWAH JADI HITAM SEMUA (SESUAI PERMINTAAN USER):
+        const matLowerBuilding = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.45, metalness: 0.70 });
+        const matLowerDoor = new THREE.MeshStandardMaterial({ color: 0x1c1917, roughness: 0.35, metalness: 0.80 });
+        const matWPC = new THREE.MeshStandardMaterial({ map: texWPC, roughness: 0.7 });
+        const matSteel = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.35, metalness: 0.75 });
+        const matGoldBrass = new THREE.MeshStandardMaterial({ color: 0xd4af37, roughness: 0.25, metalness: 0.85 });
+        const matEmissiveWarm = new THREE.MeshStandardMaterial({ color: 0xfff3d0, emissive: 0xffb74d, emissiveIntensity: 2.2, roughness: 0.2 });
+        const matEmissiveSign = new THREE.MeshStandardMaterial({ color: 0xffedd5, emissive: 0xffedd5, emissiveIntensity: 1.8 });
+        const matMossWall = new THREE.MeshStandardMaterial({ color: 0x275932, roughness: 0.95 });
+        const matWallFluted = new THREE.MeshStandardMaterial({ map: texWood, roughness: 0.45 });
+        
+        // CLEARLY VISIBLE REFLECTIVE GLASS WALLS WITH MULLIONS
+        const matGlass = new THREE.MeshPhysicalMaterial({
+            color: 0x98d4eb,
+            roughness: 0.08,
+            transmission: 0.52,
+            transparent: true,
+            opacity: 0.65,
+            reflectivity: 0.95,
+            clearcoat: 1.0,
+            clearcoatRoughness: 0.1,
+            depthWrite: false
+        });
+
+        const matWood = new THREE.MeshStandardMaterial({ map: texWood, roughness: 0.55 });
+        const matCabinet = new THREE.MeshStandardMaterial({ map: texWalnut, roughness: 0.5 }); // Dark walnut anti-flicker
+        const matCounterBase = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.65 });
+        const matBanquette = new THREE.MeshStandardMaterial({ color: 0x1e3a5f, roughness: 0.6 });
+        const matChair = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.6 });
+        const matOutdoorCushion = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.6 });
+        const matParasol = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.85 });
+        const matRoad = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.95 });
+        const matWater = new THREE.MeshPhysicalMaterial({ color: 0x0e7490, roughness: 0.1, transmission: 0.6, transparent: true, opacity: 0.88 });
+        const matReeds = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.9 });
+        const matBarStool = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.25 });
+        const matChrome = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.1, metalness: 0.95 });
+
+        const groupLower = new THREE.Group();
+        const groupCafe = new THREE.Group();
+        const groupRoof = new THREE.Group();
+        const groupFurniture = new THREE.Group();
+        const groupOutdoor = new THREE.Group();
+        const groupDims = new THREE.Group();
+        scene.add(groupLower); scene.add(groupCafe); scene.add(groupRoof); scene.add(groupFurniture); scene.add(groupOutdoor); scene.add(groupDims);
+
+        function box(w, h, d, x, y, z, mat, parent = groupCafe) {
+            const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+            m.position.set(x + w / 2, y + h / 2, z + d / 2);
+            m.castShadow = true; m.receiveShadow = true;
+            parent.add(m);
+            return m;
+        }
+
+        function quadPrism(pts, ymin, ymax, mat, parent = groupCafe) {
+            const p0 = pts[0], p1 = pts[1], p2 = pts[2], p3 = pts[3];
+            const vertices = new Float32Array([
+                p0[0], ymax, p0[1],   p1[0], ymax, p1[1],   p2[0], ymax, p2[1],
+                p0[0], ymax, p0[1],   p2[0], ymax, p2[1],   p3[0], ymax, p3[1],
+                p0[0], ymin, p0[1],   p2[0], ymin, p2[1],   p1[0], ymin, p1[1],
+                p0[0], ymin, p0[1],   p3[0], ymin, p3[1],   p2[0], ymin, p2[1],
+                p0[0], ymin, p0[1],   p1[0], ymin, p1[1],   p1[0], ymax, p1[1],
+                p0[0], ymin, p0[1],   p1[0], ymax, p1[1],   p0[0], ymax, p0[1],
+                p1[0], ymin, p1[1],   p2[0], ymin, p2[1],   p2[0], ymax, p2[1],
+                p1[0], ymin, p1[1],   p2[0], ymax, p2[1],   p1[0], ymax, p1[1],
+                p2[0], ymin, p2[1],   p3[0], ymin, p3[1],   p3[0], ymax, p3[1],
+                p2[0], ymin, p2[1],   p3[0], ymax, p3[1],   p2[0], ymax, p2[1],
+                p3[0], ymin, p3[1],   p0[0], ymin, p0[1],   p0[0], ymax, p0[1],
+                p3[0], ymin, p3[1],   p0[0], ymax, p0[1],   p3[0], ymax, p3[1]
+            ]);
+            const geom = new THREE.BufferGeometry();
+            geom.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+            geom.computeVertexNormals();
+            const mesh = new THREE.Mesh(geom, mat);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            parent.add(mesh);
+            return mesh;
+        }
+
+        // ==========================================
+        // 1. BANGUNAN BAWAH EKSISTING (WC EKSISTING, Y = -3.0m s/d -0.20m)
+        // Dibuat dari Y = -3.00 s/d Y = -0.20 (tinggi 2.80m) agar TIDAK bertabrakan dengan dak lantai kafe (Y = -0.20 s/d 0.00)
+        // Menghilangkan 100% Z-Fighting (Kedipan pada Lantai)
+        // ==========================================
+        box(17.54, 2.80, 5.24, 0.0, -3.00, 0.0, matLowerBuilding, groupLower);
+        box(1.53, 2.80, 6.64, -1.53, -3.00, -1.40, matLowerBuilding, groupLower);
+
+        for (let px = 0; px <= 17.54; px += 2.92) {
+            box(0.35, 2.80, 0.35, px - 0.175, -3.00, 5.24 - 0.175, matSteel, groupLower);
+        }
+        for (let dx = 1.0; dx <= 16.0; dx += 2.2) {
+            box(0.85, 2.10, 0.05, dx, -2.90, 5.25, matLowerDoor, groupLower);
+        }
+
+        // ==========================================
+        // 2. KONTUR TANAH, TALUD BATU KALI & AIR DANAU
+        // ==========================================
+        box(65, 0.4, 35, -20, -0.4, -35.0, matRoad);
+
+        const waterMesh = new THREE.Mesh(new THREE.PlaneGeometry(220, 220), matWater);
+        waterMesh.rotation.x = -Math.PI / 2;
+        waterMesh.position.set(8.77, -2.8, 50);
+        scene.add(waterMesh);
+
+// Kotak-kotak hijau dihilangkan sesuai permintaan user
+
+
+        // ==========================================
+        // 3. LANTAI KAFE (KERAMIK MEWAH ANTI-KEDIP) & DEK WPC
+        // ==========================================
+        // Lapisan Struktur Dak Beton (Y = -0.20 s/d 0.00)
+        box(17.54, 0.20, 5.24, 0.0, -0.20, 0.0, matConcrete);
+        box(5.27, 0.20, 1.40, -1.53, -0.20, -1.40, matConcrete);
+        // Lapisan Keramik Granit Finishing (Y = 0.0005 s/d 0.010, elevated 0.5mm agar 100% bebas kedip)
+        box(17.54, 0.010, 5.24, 0.0, 0.0005, 0.0, matFloor);
+        box(5.27, 0.010, 1.40, -1.53, 0.0005, -1.40, matFloor);
+
+        // Dek Samping Kiri (+4.00m WPC)
+        box(4.00, 0.10, 6.64, -5.53, -0.10, -1.40, matWPC);
+
+        // Dek Depan (+3.00m Kantilever Danau WPC)
+        box(23.07, 0.10, 3.00, -5.53, -0.10, 5.24, matWPC);
+
+        // DINDING BESI WARNA HITAM PADA STRUKTUR BAWAH KANTILEVER (SESUAI PERMINTAAN USER)
+        // 1. Dinding Depan Panel Baja Hitam Menghadap Danau (Z = 8.16m, Tinggi dari air Y=-2.8m s/d dak Y=-0.10m)
+        box(23.07, 2.70, 0.14, -5.53, -2.80, 8.16, matSteel);
+        // Garis-garis Ritmik Kusen Panel Baja Hitam Vertikal (Setiap 1.2m)
+        for (let wx = -5.53; wx <= 17.54; wx += 1.20) {
+            box(0.06, 2.70, 0.18, wx - 0.03, -2.80, 8.15, matSteel);
+        }
+        // 2. Dinding Samping Kiri Bawah Dek Kantilever
+        box(0.14, 2.70, 3.00, -5.53, -2.80, 5.24, matSteel);
+        // 3. Dinding Samping Kanan Bawah Dek Kantilever
+        box(0.14, 2.70, 3.00, 17.46, -2.80, 5.24, matSteel);
+        // 4. Balok Baja Hitam Utama Penopang Dak Atas
+        box(23.07, 0.35, 0.20, -5.53, -0.45, 8.14, matSteel);
+        box(23.07, 0.35, 0.20, -5.53, -0.45, 5.24, matSteel);
+
+        // Railing Kayu & Kawat Baja di Dek Danau
+        box(23.07, 0.05, 0.10, -5.53, 1.0, 8.24, matWood);
+        box(0.10, 0.05, 3.00, 17.54, 1.0, 5.24, matWood);
+        box(0.10, 0.05, 9.64, -5.53, 1.0, -1.40, matWood);
+
+        // ==========================================
+        // 4. STRUKTUR DINDING, KACA & DUA AKSES PINTU SANGAT JELAS
+        // ==========================================
+        box(13.80, 3.45, 0.20, 3.74, 0, -0.20, matConcrete);
+        box(3.47, 3.45, 0.20, -1.53, 0, -1.60, matConcrete);
+
+        // Dinding Miring 2.30m (Bagian Merah)
+        const pts_red_wall = [
+            [1.94, -1.40], [3.74, 0.0],
+            [3.74 + 0.12, 0.0 - 0.16], [1.94 + 0.12, -1.40 - 0.16]
+        ];
+        quadPrism(pts_red_wall, 0.0, 3.45, matConcrete);
+
+        // ------------------------------------------------------------------
+        // PINTU 1: FOLDING GLASS DOORS KE DEK DANAU (Z = 5.24, CENTRAL 2.50M OPENING)
+        // ------------------------------------------------------------------
+        // Kaca Kiri (X = 0 s/d 7.50):
+        box(7.50, 3.35, 0.04, 0.0, 0.05, 5.22, matGlass);
+        // Kaca Kanan (X = 10.00 s/d 17.54):
+        box(7.54, 3.35, 0.04, 10.0, 0.05, 5.22, matGlass);
+
+        // Pintu Terbuka ke Dek Danau (X = 7.50 s/d 10.00 terbuka leluasa, panel lipat terlipat di samping):
+        box(0.15, 3.00, 0.45, 7.35, 0.05, 5.30, matSteel); // Daun lipat terlipat di kiri
+        box(0.15, 3.00, 0.45, 10.05, 0.05, 5.30, matSteel); // Daun lipat terlipat di kanan
+
+        // Kusen & Bingkai Baja Hitam Fasad Danau
+        box(17.54, 0.08, 0.08, 0.0, 3.38, 5.20, matSteel);
+        box(17.54, 0.06, 0.08, 0.0, 0.0, 5.20, matSteel);
+        for (let fx = 0.0; fx <= 17.54; fx += 1.17) {
+            box(0.05, 3.35, 0.08, fx - 0.025, 0.05, 5.20, matSteel);
+        }
+        box(7.50, 0.05, 0.07, 0.0, 1.10, 5.21, matSteel);
+        box(7.54, 0.05, 0.07, 10.0, 1.10, 5.21, matSteel);
+
+        // Portal Bingkai Hitam Megah di Bukaan Pintu Danau (2.50m)
+        box(0.08, 3.10, 0.10, 7.46, 0.0, 5.21, matSteel);
+        box(0.08, 3.10, 0.10, 10.00, 0.0, 5.21, matSteel);
+        box(2.62, 0.10, 0.10, 7.46, 3.00, 5.21, matSteel);
+
+        // ------------------------------------------------------------------
+        // PINTU 2: PINTU MASUK UTAMA DARI JALAN / DEK SAMPING (LEBAR 1.85M DI DINDING MIRING)
+        // ------------------------------------------------------------------
+        // Segmen Kaca Samping Belakang (dari Z = -1.40 ke Z = 1.95):
+        const pts_left_glass_1 = [
+            [-1.53, -1.40], [-1.53 + 0.04, -1.40],
+            [-0.72, 1.95], [-0.76, 1.95]
+        ];
+        quadPrism(pts_left_glass_1, 0.05, 3.40, matGlass);
+
+        // Segmen Kaca Samping Depan (dari Z = 3.80 ke Z = 5.24):
+        const pts_left_glass_2 = [
+            [-0.34, 3.80], [-0.30, 3.80],
+            [0.04, 5.24], [0.0, 5.24]
+        ];
+        quadPrism(pts_left_glass_2, 0.05, 3.40, matGlass);
+
+        // KUSEN PORTAL BAJA HITAM PINTU MASUK UTAMA (Z = 1.95 s/d 3.80, LEBAR 1.85M, TINGGI 2.80M):
+        // Tiang Kusen Kiri Pintu
+        box(0.12, 2.90, 0.12, -0.80, 0, 1.90, matSteel);
+        // Tiang Kusen Kanan Pintu
+        box(0.12, 2.90, 0.12, -0.38, 0, 3.75, matSteel);
+        // Balok Atas Kusen Pintu
+        const pts_door_head = [
+            [-0.80, 1.90], [-0.38, 3.75],
+            [-0.38 + 0.12, 3.75], [-0.80 + 0.12, 1.90]
+        ];
+        quadPrism(pts_door_head, 2.80, 2.92, matSteel);
+
+        // DAUN PINTU PIVOT REALISTIS (PINTU MASUK UTAMA):
+        // Daun 1: Pintu Pivot Terbuka Menyambut Tamu (Sedikit Ajar 30°)
+        const pivotDoorGroup = new THREE.Group();
+        const pLeaf = new THREE.Mesh(new THREE.BoxGeometry(0.85, 2.70, 0.05), matGlass);
+        pLeaf.position.set(0.425, 1.35, 0);
+        pivotDoorGroup.add(pLeaf);
+        // Bingkai Baja Daun Pintu
+        const pFrame = new THREE.Mesh(new THREE.BoxGeometry(0.87, 2.72, 0.06), matSteel);
+        pFrame.position.set(0.425, 1.35, 0);
+        pivotDoorGroup.add(pFrame);
+        // Handle Tarik Kayu Jati Mewah (Panjang 1.40m)
+        const pHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.40, 12), matWood);
+        pHandle.position.set(0.75, 1.25, 0.06);
+        pivotDoorGroup.add(pHandle);
+        pivotDoorGroup.position.set(-0.76, 0.05, 1.95);
+        pivotDoorGroup.rotation.y = -0.55; // Terbuka estetik ke arah dek samping!
+        groupCafe.add(pivotDoorGroup);
+
+        // Daun 2: Daun Pintu Samping Kanan
+        const pLeaf2 = new THREE.Mesh(new THREE.BoxGeometry(0.85, 2.70, 0.05), matGlass);
+        pLeaf2.position.set(-0.46, 1.40, 3.30);
+        pLeaf2.rotation.y = 0.23;
+        groupCafe.add(pLeaf2);
+        const pHandle2 = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.40, 12), matWood);
+        pHandle2.position.set(-0.54, 1.30, 2.95);
+        groupCafe.add(pHandle2);
+
+        // KANOPI ENTRANCE BAJA HITAM DENGAN DOWNLIGHT DI ATAS PINTU MASUK
+        const pts_canopy = [
+            [-0.95, 1.80], [-0.25, 3.85],
+            [-1.45, 3.85], [-2.15, 1.80] // Menjorok 1.2m ke arah dek samping
+        ];
+        quadPrism(pts_canopy, 2.85, 2.95, matSteel);
+
+        // Keset Selamat Datang di Depan Pintu
+        box(1.20, 0.015, 0.80, -1.30, 0, 2.45, matCounterBase);
+
+        // Dinding Kaca Kanan (X = 17.54)
+        box(0.04, 3.35, 5.24, 17.52, 0.05, 0.0, matGlass);
+        box(0.08, 0.08, 5.24, 17.50, 3.38, 0.0, matSteel);
+        box(0.08, 0.06, 5.24, 17.50, 0.0, 0.0, matSteel);
+        for (let fz = 0.0; fz <= 5.24; fz += 1.31) {
+            box(0.08, 3.35, 0.05, 17.50, 0.05, fz - 0.025, matSteel);
+        }
+
+        // ==========================================
+        // 5. GRAND WRAP-AROUND BAR & LEMARI MIRING (ANTI-FLICKER & REALISTIS)
+        // ==========================================
+        // LEMARI STORAGE DI DINDING MERAH 2.30M (Kayu Walnut Gelap, Offset 2cm Anti-Kedip!)
+        const pts_lemari = [
+            [1.928, -1.384], [3.728, 0.016],
+            [3.388, 0.446], [1.588, -0.954]
+        ];
+        quadPrism(pts_lemari, 0.0, 2.60, matCabinet, groupFurniture);
+
+        // Rak Display Kaca Berlampu di Lemari
+        const pts_lemari_shelf = [
+            [2.05, -1.25], [3.60, 0.0],
+            [3.35, 0.32], [1.80, -0.93]
+        ];
+        quadPrism(pts_lemari_shelf, 1.20, 1.22, matGlass, groupFurniture);
+        quadPrism(pts_lemari_shelf, 1.70, 1.72, matGlass, groupFurniture);
+
+        // Back-bar
+        const pts_backbar = [
+            [-1.44, -1.35], [1.85, -1.35],
+            [1.85, -0.65], [-1.28, -0.65]
+        ];
+        quadPrism(pts_backbar, 0.0, 0.85, matCounterBase, groupFurniture);
+        quadPrism(pts_backbar, 0.82, 0.85, matWood, groupFurniture);
+
+        // Shelves
+        const pts_shelves = [
+            [-1.44, -1.35], [1.85, -1.35],
+            [1.85, -1.05], [-1.37, -1.05]
+        ];
+        quadPrism(pts_shelves, 1.50, 1.55, matWood, groupFurniture);
+        quadPrism(pts_shelves, 1.95, 2.00, matWood, groupFurniture);
+
+        // Meja Sudut Miring Alat Kopi
+        const pts_corner = [
+            [-1.28, -0.65], [-0.40, -0.65],
+            [-0.40, 0.45], [-1.02, 0.45]
+        ];
+        quadPrism(pts_corner, 0.0, 0.85, matCounterBase, groupFurniture);
+        quadPrism(pts_corner, 0.82, 0.85, matWood, groupFurniture);
+
+        // REALISTIC COMMERCIAL 2-GROUP ESPRESSO MACHINE
+        const espGroup = new THREE.Group();
+        // Body Matte Black
+        const espBody = new THREE.Mesh(new THREE.BoxGeometry(0.70, 0.45, 0.50), matSteel);
+        espBody.position.set(0, 0.225, 0); espGroup.add(espBody);
+        // Cup Warmer Top & Ceramic Cups
+        const cupTop = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.03, 0.46), matChrome);
+        cupTop.position.set(0, 0.465, 0); espGroup.add(cupTop);
+        for (let cx = -0.22; cx <= 0.22; cx += 0.11) {
+            const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.025, 0.06, 12), matBarStool);
+            cup.position.set(cx, 0.51, -0.05); espGroup.add(cup);
+        }
+        // E61 Chrome Groupheads (2 Groups)
+        for (let gx of [-0.15, 0.15]) {
+            const gh = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.10, 16), matChrome);
+            gh.rotation.x = Math.PI / 2; gh.position.set(gx, 0.22, 0.26); espGroup.add(gh);
+            const portafilter = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.18, 12), matWood);
+            portafilter.rotation.x = Math.PI / 2; portafilter.position.set(gx, 0.18, 0.38); espGroup.add(portafilter);
+        }
+        // Dual Pressure Gauges
+        for (let px of [-0.05, 0.05]) {
+            const gauge = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.01, 16), matChrome);
+            gauge.rotation.x = Math.PI / 2; gauge.position.set(px, 0.32, 0.255); espGroup.add(gauge);
+        }
+        espGroup.position.set(-0.95, 0.85, -0.45);
+        groupFurniture.add(espGroup);
+
+        // Dual Commercial Coffee Grinders (Bean hoppers)
+        for (let grdx of [-0.95, -0.75]) {
+            const grd = new THREE.Group();
+            const gBody = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.32, 0.22), matSteel);
+            gBody.position.set(0, 0.16, 0); grd.add(gBody);
+            const hopper = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.22, 16), matGlass);
+            hopper.position.set(0, 0.43, 0); grd.add(hopper);
+            grd.position.set(grdx, 0.85, 0.15);
+            groupFurniture.add(grd);
+        }
+
+        // Meja Bar Depan (View Danau)
+        const pts_frontbar = [
+            [-1.02, 0.45], [1.85, 0.45],
+            [1.85, 1.25], [-0.84, 1.25]
+        ];
+        quadPrism(pts_frontbar, 0.0, 0.85, matCounterBase, groupFurniture);
+        quadPrism(pts_frontbar, 0.82, 0.85, matWood, groupFurniture);
+
+        const pts_front_ledge = [
+            [-0.84, 1.25], [1.85, 1.25],
+            [1.85, 1.60], [-0.76, 1.60]
+        ];
+        quadPrism(pts_front_ledge, 0.0, 1.05, matCounterBase, groupFurniture);
+        quadPrism(pts_front_ledge, 1.05, 1.10, matWood, groupFurniture);
+
+        // V60 Pour-over station + Pastry Display + POS Tablet
+        box(0.60, 0.25, 0.50, -0.20, 0.85, 0.55, matSteel, groupFurniture);
+        box(0.45, 0.35, 0.50, 0.45, 0.85, 0.55, matGlass, groupFurniture);
+        box(0.35, 0.30, 0.25, 0.95, 1.10, 0.65, matSteel, groupFurniture);
+        box(0.45, 0.04, 0.70, 1.40, 0.85, 0.50, matWood, groupFurniture); // Pintu flap saji
+
+        // Meja Bar Miring ke Lemari (True Poligonal CAD)
+        const pts_slanted_bar = [
+            [1.85, 0.45], [2.70, -0.20],
+            [3.25, 0.25], [1.85, 1.25]
+        ];
+        quadPrism(pts_slanted_bar, 0.0, 0.85, matCounterBase, groupFurniture);
+        quadPrism(pts_slanted_bar, 0.82, 0.85, matWood, groupFurniture);
+
+        const pts_slanted_ledge = [
+            [1.85, 1.25], [3.25, 0.25],
+            [3.50, 0.45], [1.85, 1.60]
+        ];
+        quadPrism(pts_slanted_ledge, 0.0, 1.05, matCounterBase, groupFurniture);
+        quadPrism(pts_slanted_ledge, 1.05, 1.10, matWood, groupFurniture);
+
+        // ==========================================
+        // 6. 6 KURSI BAR STOOL PUTIH INDOOR
+        // ==========================================
+        function createBarStool(x, z, parent = groupFurniture) {
+            const stGroup = new THREE.Group();
+            const seat = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.08, 24), matBarStool);
+            seat.position.set(x, 0.75, z);
+            seat.castShadow = true; stGroup.add(seat);
+
+            const post = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.70, 12), matSteel);
+            post.position.set(x, 0.35, z);
+            post.castShadow = true; stGroup.add(post);
+
+            const ring = new THREE.Mesh(new THREE.TorusGeometry(0.14, 0.015, 8, 24), matSteel);
+            ring.rotation.x = Math.PI / 2;
+            ring.position.set(x, 0.28, z);
+            stGroup.add(ring);
+
+            const base = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.20, 0.015, 24), matSteel);
+            base.position.set(x, 0.01, z);
+            stGroup.add(base);
+
+            parent.add(stGroup);
+        }
+
+        const frontStoolCoords = [[-0.10, 1.95], [0.60, 1.95], [1.15, 1.95]];
+        frontStoolCoords.forEach(c => createBarStool(c[0], c[1]));
+
+        const slantedStoolCoords = [[2.42, 1.64], [2.91, 1.30], [3.41, 0.95]];
+        slantedStoolCoords.forEach(c => createBarStool(c[0], c[1]));
+
+        // ==========================================
+        // 7. FURNITURE TAMU INDOOR (50 KURSI RAPI)
+        // ==========================================
+        function createDiningTable2P(x, z) {
+            const tGroup = new THREE.Group();
+            const top = new THREE.Mesh(new THREE.BoxGeometry(0.70, 0.035, 0.70), matWood);
+            top.position.set(x, 0.75 - 0.0175, z);
+            top.castShadow = true; tGroup.add(top);
+
+            const col = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.70, 12), matSteel);
+            col.position.set(x, 0.35, z);
+            col.castShadow = true; tGroup.add(col);
+
+            const b = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.012, 0.45), matSteel);
+            b.position.set(x, 0.006, z);
+            tGroup.add(b);
+            groupFurniture.add(tGroup);
+        }
+
+        function createDiningChair(x, z, rotY = 0) {
+            const cGroup = new THREE.Group();
+            const s = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.04, 0.44), matChair);
+            s.position.set(0, 0.43, 0);
+            s.castShadow = true; cGroup.add(s);
+
+            const br = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.35, 0.03), matWood);
+            br.position.set(0, 0.65, -0.19);
+            br.castShadow = true; cGroup.add(br);
+
+            for (let lx of [-0.18, 0.18]) {
+                for (let lz of [-0.18, 0.18]) {
+                    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.012, 0.43, 8), matWood);
+                    leg.position.set(lx, 0.215, lz);
+                    cGroup.add(leg);
+                }
+            }
+            cGroup.position.set(x, 0, z);
+            cGroup.rotation.y = rotY;
+            groupFurniture.add(cGroup);
+        }
+
+        box(4.30, 0.45, 0.55, 3.80, 0, 0.05, matBanquette, groupFurniture);
+        box(4.30, 0.50, 0.15, 3.80, 0.45, -0.05, matBanquette, groupFurniture);
+
+        box(1.30, 0.85, 0.55, 8.10, 0, 0.05, matWood, groupFurniture);
+        box(1.10, 0.60, 0.45, 8.20, 0.85, 0.10, matReeds, groupFurniture);
+
+        box(7.80, 0.45, 0.55, 9.40, 0, 0.05, matBanquette, groupFurniture);
+        box(7.80, 0.50, 0.15, 9.40, 0.45, -0.05, matBanquette, groupFurniture);
+
+        const banquetteTableXs = [4.60, 5.90, 7.20, 10.20, 11.60, 13.00, 14.40, 15.80];
+        banquetteTableXs.forEach(tx => {
+            createDiningTable2P(tx, 0.95);
+            createDiningChair(tx, 1.60, Math.PI);
+        });
+
+        const lakeTableXs = [3.60, 5.00, 6.40, 11.00, 12.35, 13.70, 15.05, 16.40];
+        lakeTableXs.forEach(tx => {
+            createDiningTable2P(tx, 4.70);
+            createDiningChair(tx - 0.20, 4.05, 0);
+            createDiningChair(tx + 0.20, 4.05, 0);
+        });
+
+        box(3.20, 0.06, 0.85, 11.0, 0.70, 2.45, matWood, groupFurniture);
+        box(0.08, 0.70, 0.80, 11.2, 0, 2.475, matSteel, groupFurniture);
+        box(0.08, 0.70, 0.80, 13.9, 0, 2.475, matSteel, groupFurniture);
+        for (let cx = 0; cx < 4; cx++) {
+            createDiningChair(11.4 + cx * 0.75, 1.85, 0);
+            createDiningChair(11.4 + cx * 0.75, 3.50, Math.PI);
+        }
+
+        box(0.80, 0.55, 0.80, 16.0 - 0.40, 0, 2.85 - 0.40, matWood, groupFurniture);
+        createDiningChair(16.0, 2.05, 0);
+        createDiningChair(16.0, 3.65, Math.PI);
+        createDiningChair(15.20, 2.85, Math.PI / 2);
+        createDiningChair(16.80, 2.85, -Math.PI / 2);
+
+
+        // ==========================================
+        // 7B. DESAIN INTERIOR DINDING (FLUTED WOOD, MOSS WALL, ART, SIGNAGE & COVE LED)
+        // ==========================================
+        const groupWallInterior = new THREE.Group();
+        groupCafe.add(groupWallInterior);
+
+        // 1. Backing Panel Dinding Belakang (Kayu Jati / Walnut Lembut)
+        box(13.76, 2.50, 0.03, 3.74, 0.95, -0.015, matWallFluted, groupWallInterior);
+
+        // 2. Kisi-Kisi Panel Kayu Vertikal (Fluted Acoustic Wood Slats) di Belakang Sofa Banquette
+        // Bagian Kiri Banquette (X = 3.80 s/d 8.00)
+        for (let sx = 3.82; sx <= 8.00; sx += 0.12) {
+            box(0.045, 2.45, 0.025, sx, 0.97, 0.015, matWood, groupWallInterior);
+        }
+        // Bagian Kanan Banquette (X = 9.45 s/d 17.40)
+        for (let sx = 9.48; sx <= 17.40; sx += 0.12) {
+            box(0.045, 2.45, 0.025, sx, 0.97, 0.015, matWood, groupWallInterior);
+        }
+
+        // 3. Wall-Grazing Hidden Cove LED Strip di Atas Kisi-Kisi Dinding (Efek Cahaya Mewah ke Bawah)
+        box(13.74, 0.04, 0.06, 3.75, 3.41, 0.01, matEmissiveWarm, groupWallInterior);
+        const wallCoveLight1 = new THREE.PointLight(0xffb74d, 1.2, 8.0);
+        wallCoveLight1.position.set(6.0, 3.35, 0.3);
+        groupWallInterior.add(wallCoveLight1);
+        const wallCoveLight2 = new THREE.PointLight(0xffb74d, 1.2, 8.0);
+        wallCoveLight2.position.set(13.5, 3.35, 0.3);
+        groupWallInterior.add(wallCoveLight2);
+
+        // 4. Centerpiece Feature Wall di Tengah Sofa (X = 8.10 s/d 9.40, di atas Planter Box)
+        // Dinding Taman Vertikal Indoor (Lush Green Moss Wall)
+        box(1.30, 2.15, 0.06, 8.10, 1.25, 0.02, matMossWall, groupWallInterior);
+        // Daun-daun foliage hijau bertingkat
+        for (let fy = 1.35; fy <= 3.20; fy += 0.35) {
+            box(1.20, 0.18, 0.08, 8.15, fy, 0.04, matReeds, groupWallInterior);
+        }
+        // Plakat Signage Akrilik Hitam Timbul dengan Lis Brass Emas Mewah
+        box(1.10, 0.38, 0.03, 8.20, 2.30, 0.11, matSteel, groupWallInterior);
+        box(1.12, 0.40, 0.015, 8.19, 2.29, 0.10, matGoldBrass, groupWallInterior);
+        // Huruf Signage LED Menyala Hangat "ANJALAI CAFE"
+        box(0.92, 0.12, 0.02, 8.29, 2.43, 0.14, matEmissiveSign, groupWallInterior);
+        const signLight = new THREE.PointLight(0xffedd5, 0.8, 3.5);
+        signLight.position.set(8.75, 2.45, 0.35);
+        groupWallInterior.add(signLight);
+
+        // 5. Ambalan Display Melayang (Floating Shelves) di Dinding Belakang Bar
+        const shelfYs = [1.50, 2.00, 2.50];
+        shelfYs.forEach(sy => {
+            // Ambalan Kayu Solid Jati
+            box(3.20, 0.04, 0.24, -1.45, sy, -1.55, matWood, groupWallInterior);
+            // LED Strip Tersembunyi di Bawah Ambalan (Backlit Display)
+            box(3.16, 0.015, 0.03, -1.43, sy - 0.015, -1.35, matEmissiveWarm, groupWallInterior);
+            // Display Botol & Toples Kopi Artisan di Ambalan
+            for (let bx = -1.25; bx <= 1.45; bx += 0.45) {
+                const bottle = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.18, 10), matGlass);
+                bottle.position.set(bx, sy + 0.11, -1.45);
+                groupWallInterior.add(bottle);
+                const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.03, 10), matGoldBrass);
+                cap.position.set(bx, sy + 0.21, -1.45);
+                groupWallInterior.add(cap);
+            }
+        });
+
+        // 6. Lampu Dinding Minimalis Up-and-Down (Modern Wall Sconces)
+        const sconceXs = [3.85, 8.00, 9.50, 13.50, 17.35];
+        sconceXs.forEach(sx => {
+            const scGroup = new THREE.Group();
+            // Badan Lampu Silinder Hitam
+            const body = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.22, 12), matSteel);
+            body.position.set(sx, 2.10, 0.08);
+            scGroup.add(body);
+            // Lensa Pendar Atas & Bawah
+            const topGlow = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, 0.02, 12), matEmissiveWarm);
+            topGlow.position.set(sx, 2.21, 0.08);
+            scGroup.add(topGlow);
+            const btmGlow = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, 0.02, 12), matEmissiveWarm);
+            btmGlow.position.set(sx, 1.99, 0.08);
+            scGroup.add(btmGlow);
+            groupWallInterior.add(scGroup);
+        });
+
+        // ==========================================
+        // 7C. DESAIN SISTEM PENCAHAYAAN (PENDANT LAMPS, MAGNETIC TRACK LIGHTS, COVE LED)
+        // ==========================================
+        const groupLighting = new THREE.Group();
+        groupCafe.add(groupLighting);
+
+        function createPendantLamp(x, z, dropY = 2.30, shadeRadius = 0.15, shadeHeight = 0.18) {
+            const pGroup = new THREE.Group();
+            // Kabel Gantung Hitam Ramping dari Plafon
+            const cordLength = 3.45 - dropY;
+            const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, cordLength, 8), matSteel);
+            cord.position.set(x, 3.45 - cordLength / 2, z);
+            pGroup.add(cord);
+            // Fitting Brass Emas Mewah
+            const fitting = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.06, 12), matGoldBrass);
+            fitting.position.set(x, dropY + shadeHeight / 2 + 0.03, z);
+            pGroup.add(fitting);
+            // Kap Lampu Cone Hitam Elegan (Interior Gold)
+            const shade = new THREE.Mesh(new THREE.ConeGeometry(shadeRadius, shadeHeight, 18), matSteel);
+            shade.position.set(x, dropY, z);
+            pGroup.add(shade);
+            // Bohlam Menyala Warm 3000K
+            const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.045, 12, 12), matEmissiveWarm);
+            bulb.position.set(x, dropY - 0.03, z);
+            pGroup.add(bulb);
+            // Cahaya Nyata Menyinari Meja
+            const pLight = new THREE.PointLight(0xffb74d, 1.3, 5.5);
+            pLight.position.set(x, dropY - 0.15, z);
+            pGroup.add(pLight);
+            groupLighting.add(pGroup);
+        }
+
+        // A. 3 Lampu Gantung Estetik di Atas Meja Bar Depan
+        createPendantLamp(3.80, 1.80, 2.30, 0.15, 0.18);
+        createPendantLamp(5.50, 1.80, 2.30, 0.15, 0.18);
+        createPendantLamp(7.20, 1.80, 2.30, 0.15, 0.18);
+
+        // B. 2 Lampu Gantung Mewah di Atas Meja Komunal Kayu Jati (8-Seater)
+        function createCommunalPendant(x, z) {
+            const cpGroup = new THREE.Group();
+            const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 1.20, 8), matSteel);
+            cord.position.set(x, 3.45 - 0.60, z);
+            cpGroup.add(cord);
+            const shade = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.28, 0.14, 20), matSteel);
+            shade.position.set(x, 2.25, z);
+            cpGroup.add(shade);
+            const rim = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.012, 8, 24), matGoldBrass);
+            rim.rotation.x = Math.PI / 2;
+            rim.position.set(x, 2.18, z);
+            cpGroup.add(rim);
+            const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 12), matEmissiveWarm);
+            bulb.position.set(x, 2.22, z);
+            cpGroup.add(bulb);
+            const cLight = new THREE.PointLight(0xffc107, 1.4, 6.0);
+            cLight.position.set(x, 2.10, z);
+            cpGroup.add(cLight);
+            groupLighting.add(cpGroup);
+        }
+        createCommunalPendant(11.80, 2.85);
+        createCommunalPendant(13.80, 2.85);
+
+        // C. Magnetic Track Light System (Rel Lampu Sorot Silinder Hitam di Plafon)
+        // Rel 1: Jalur Atas Bar & Koridor
+        box(16.5, 0.03, 0.05, 0.0, 3.42, 1.35, matSteel, groupLighting);
+        for (let tx = 0.5; tx <= 16.0; tx += 2.2) {
+            const spot = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.10, 12), matSteel);
+            spot.position.set(tx, 3.36, 1.35);
+            spot.rotation.x = 0.20;
+            groupLighting.add(spot);
+            const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.01, 12), matEmissiveWarm);
+            lens.position.set(tx, 3.31, 1.37);
+            groupLighting.add(lens);
+        }
+        // Rel 2: Jalur Atas Area Sofa & Dining
+        box(13.5, 0.03, 0.05, 3.8, 3.42, 3.65, matSteel, groupLighting);
+        for (let tx = 4.2; tx <= 16.5; tx += 2.2) {
+            const spot = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.10, 12), matSteel);
+            spot.position.set(tx, 3.36, 3.65);
+            spot.rotation.x = -0.20;
+            groupLighting.add(spot);
+            const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.01, 12), matEmissiveWarm);
+            lens.position.set(tx, 3.31, 3.63);
+            groupLighting.add(lens);
+        }
+
+        // D. Floating Under-Counter Warm LED Strip di Meja Bar (Efek Bar Melayang)
+        box(7.50, 0.025, 0.03, 0.0, 0.83, 1.70, matEmissiveWarm, groupLighting);
+        // E. Floating Under-Bench Warm LED Strip di Bawah Sofa Banquette
+        box(13.50, 0.025, 0.03, 3.80, 0.10, 0.55, matEmissiveWarm, groupLighting);
+
+        // ==========================================
+        // 8. AREA OUTDOOR LENGKAP (+40 KURSI OUTDOOR)
+        // ==========================================
+        // A. DEK KANTILEVER DEPAN DANAU (+3.00M, Z = 5.24 s/d 8.24)
+        box(17.0, 0.05, 0.35, 0.2, 1.05, 7.85, matWood, groupOutdoor);
+        box(17.0, 1.05, 0.06, 0.2, 0.0, 8.16, matSteel, groupOutdoor);
+
+        for (let ox = 0.6; ox <= 16.6; ox += 1.45) {
+            createBarStool(ox, 7.50, groupOutdoor);
+        }
+
+        function createOutdoorLoungeSet(cx, cz) {
+            const lg = new THREE.Group();
+            const tab = new THREE.Mesh(new THREE.BoxGeometry(1.10, 0.45, 0.70), matWood);
+            tab.position.set(cx, 0.225, cz);
+            tab.castShadow = true; lg.add(tab);
+
+            const chairOffsets = [
+                [-0.85, 0, 0], [0.85, 0, Math.PI], [0, -0.65, Math.PI / 2], [0, 0.65, -Math.PI / 2]
+            ];
+            chairOffsets.forEach(co => {
+                const ac = new THREE.Group();
+                const seat = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.12, 0.55), matOutdoorCushion);
+                seat.position.set(0, 0.35, 0);
+                seat.castShadow = true; ac.add(seat);
+                const back = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.35, 0.06), matWood);
+                back.position.set(0, 0.55, -0.25);
+                back.castShadow = true; ac.add(back);
+                ac.position.set(cx + co[0], 0, cz + co[1]);
+                ac.rotation.y = co[2];
+                lg.add(ac);
+            });
+            groupOutdoor.add(lg);
+        }
+
+        createOutdoorLoungeSet(4.2, 6.5);
+        createOutdoorLoungeSet(13.5, 6.5);
+
+        // B. DEK SAMPING JALAN (+4.00M)
+        function createOutdoorCafeTableWithUmbrella(cx, cz) {
+            const ug = new THREE.Group();
+            const tab = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.035, 24), matWood);
+            tab.position.set(cx, 0.75, cz);
+            tab.castShadow = true; ug.add(tab);
+            const col = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.75, 12), matSteel);
+            col.position.set(cx, 0.375, cz);
+            ug.add(col);
+
+            const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 2.60, 12), matSteel);
+            pole.position.set(cx, 1.30, cz);
+            ug.add(pole);
+            const canopy = new THREE.Mesh(new THREE.ConeGeometry(1.30, 0.45, 16), matParasol);
+            canopy.position.set(cx, 2.50, cz);
+            canopy.castShadow = true; ug.add(canopy);
+
+            for (let a = 0; a < 4; a++) {
+                const ang = a * (Math.PI / 2) + Math.PI / 4;
+                const chx = cx + Math.cos(ang) * 0.65;
+                const chz = cz + Math.sin(ang) * 0.65;
+                const ch = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.04, 0.42), matChair);
+                ch.position.set(chx, 0.43, chz);
+                ch.rotation.y = -ang - Math.PI / 2;
+                ch.castShadow = true; ug.add(ch);
+            }
+            groupOutdoor.add(ug);
+        }
+
+        const sideTableZs = [-0.4, 1.2, 2.8, 4.4];
+        sideTableZs.forEach(sz => {
+            createOutdoorCafeTableWithUmbrella(-3.5, sz);
+        });
+
+        for (let pz of [-1.2, 0.4, 2.0, 3.6, 5.0]) {
+            box(0.50, 0.60, 0.50, -5.45, 0, pz, matWood, groupOutdoor);
+            box(0.40, 0.80, 0.40, -5.40, 0.60, pz + 0.05, matReeds, groupOutdoor);
+        }
+
+        // ==========================================
+        // 9. ATAP KISI-KISI KAYU KILOGRAM CAFE
+        // ==========================================
+        for (let sl = 0; sl < 36; sl++) {
+            box(18.5, 0.06, 0.04, -1.0, 3.45, (5.24 / 36) * sl, matWood, groupRoof);
+        }
+        box(21.0, 0.25, 7.5, -2.0, 3.58, -1.0, matSteel, groupRoof);
+
+        // 3D Badges
+        function badge(text, x, y, z) {
+            const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.90)'; ctx.roundRect(8, 8, 496, 112, 24); ctx.fill();
+            ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 6; ctx.stroke();
+            ctx.font = 'bold 36px sans-serif'; ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(text, 256, 64);
+            const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), depthTest: false }));
+            sprite.position.set(x, y, z); sprite.scale.set(3.6, 0.90, 1);
+            groupDims.add(sprite);
+        }
+        badge("🚪 PINTU MASUK UTAMA (DARI JALAN)", -0.65, 3.2, 2.85);
+        badge("🚪 PINTU DANAU (FOLDING 2.50M)", 8.77, 3.2, 5.24);
+        badge("☕ MEJA BAR SERANGKAI & LEMARI", 1.2, 2.4, 0.8);
+        badge("🌅 DEK KANTILEVER DANAU (+3M)", 8.77, 2.0, 7.8);
+        badge("🌿 DEK SAMPING JALAN (+4M)", -3.5, 2.2, 2.0);
+
+        // CAMERA PRESETS:
+        const presets = {
+            // Focus on Main Entrance Door from Side Deck:
+            entrance: { pos: new THREE.Vector3(-4.8, 2.2, 2.85), target: new THREE.Vector3(-0.65, 1.4, 2.85) },
+            // Focus on Lake Cantilever Deck & Folding Door:
+            deck: { pos: new THREE.Vector3(8.77, 2.5, 14.0), target: new THREE.Vector3(8.77, 1.3, 5.5) },
+            // Interior wide-angle looking straight out to lake:
+            interior: { pos: new THREE.Vector3(8.5, 1.75, 1.0), target: new THREE.Vector3(8.77, 1.35, 7.5) },
+            // Focus on Bar & Lemari:
+            bar: { pos: new THREE.Vector3(5.2, 1.9, 3.8), target: new THREE.Vector3(1.0, 1.1, 0.4) },
+            // Banquette Bench:
+            banquette: { pos: new THREE.Vector3(7.5, 1.8, 3.5), target: new THREE.Vector3(12.5, 1.3, 0.5) },
+            // Side Deck:
+            sidedeck: { pos: new THREE.Vector3(-9.5, 3.5, 2.0), target: new THREE.Vector3(-2.0, 1.2, 2.0) },
+            // Lake exterior view:
+            lake: { pos: new THREE.Vector3(8.77, 3.0, 24.0), target: new THREE.Vector3(8.77, 0.5, 2.0) },
+            // Top-down 2D plan:
+            top: { pos: new THREE.Vector3(8.77, 28.0, 3.5), target: new THREE.Vector3(8.77, 0, 3.5) }
+        };
+
+        // Start default camera at the MAIN ENTRANCE DOOR!
+        camera.position.copy(presets.entrance.pos);
+        controls.target.copy(presets.entrance.target);
+        controls.update();
+
+                // 1. Camera Dropdown Selector (Sangat Praktis & Bersih di HP)
+        const camSelect = document.getElementById('camera-select');
+        if (camSelect) {
+            camSelect.addEventListener('change', (e) => {
+                const targetKey = e.target.value;
+                const p = presets[targetKey];
+                if (p) transitionTo(p.pos, p.target);
+            });
+        }
+
+        // 2. Toggle Advanced Controls Drawer
+        const btnAdv = document.getElementById('btn-toggle-advanced');
+        const advBox = document.getElementById('advanced-controls');
+        if (btnAdv && advBox) {
+            btnAdv.addEventListener('click', () => {
+                const isHidden = advBox.style.display === 'none';
+                advBox.style.display = isHidden ? 'block' : 'none';
+                btnAdv.textContent = isHidden ? '⚙️ Tutup Opsi ▲' : '⚙️ Opsi Plafon & Lapisan ▼';
+            });
+        }
+
+        // 3. Mode Layar Penuh (Menghilangkan semua UI agar desain 3D 100% plong tanpa halangan di HP)
+        const btnClean = document.getElementById('btn-clean-mode');
+        const btnRestore = document.getElementById('btn-restore-ui');
+        const headerBar = document.getElementById('header-bar');
+        const ctrlPanel = document.getElementById('controls-panel');
+        const qToolbar = document.getElementById('quick-toolbar');
+        const infoCard = document.getElementById('info-card');
+
+        if (btnClean && btnRestore) {
+            btnClean.addEventListener('click', () => {
+                if (headerBar) headerBar.style.display = 'none';
+                if (ctrlPanel) ctrlPanel.style.display = 'none';
+                if (qToolbar) qToolbar.style.display = 'none';
+                if (infoCard) infoCard.style.display = 'none';
+                btnRestore.style.display = 'block';
+            });
+
+            btnRestore.addEventListener('click', () => {
+                if (headerBar) headerBar.style.display = 'flex';
+                if (ctrlPanel) ctrlPanel.style.display = 'block';
+                if (qToolbar) qToolbar.style.display = 'flex';
+                if (infoCard && window.innerWidth > 768) infoCard.style.display = 'block';
+                btnRestore.style.display = 'none';
+            });
+        }
+
+        function setFov(fovVal) {
+            currentFov = fovVal;
+            camera.fov = fovVal;
+            camera.updateProjectionMatrix();
+            document.querySelectorAll('.fov-btn').forEach(b => {
+                b.classList.toggle('active', parseInt(b.getAttribute('data-fov')) === fovVal);
+            });
+            document.getElementById('btn-toggle-wide').textContent = '↔️ Lensa Wide (' + fovVal + '°)';
+        }
+
+        document.querySelectorAll('.fov-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                setFov(parseInt(btn.getAttribute('data-fov')));
+            });
+        });
+
+        document.getElementById('btn-zoom-in').addEventListener('click', () => {
+            const dir = new THREE.Vector3().subVectors(controls.target, camera.position).normalize();
+            camera.position.addScaledVector(dir, 1.8);
+            controls.update();
+        });
+
+        document.getElementById('btn-zoom-out').addEventListener('click', () => {
+            const dir = new THREE.Vector3().subVectors(controls.target, camera.position).normalize();
+            camera.position.addScaledVector(dir, -2.5);
+            controls.update();
+        });
+
+        document.getElementById('btn-toggle-wide').addEventListener('click', () => {
+            if (currentFov === 55) setFov(78);
+            else if (currentFov === 78) setFov(92);
+            else setFov(55);
+        });
+
+        document.getElementById('btn-walkthrough').addEventListener('click', () => {
+            setFov(85);
+            transitionTo(new THREE.Vector3(7.0, 1.6, 2.5), new THREE.Vector3(1.2, 1.1, 0.4));
+        });
+
+        const btnAutoRotate = document.getElementById('btn-auto-rotate');
+        btnAutoRotate.addEventListener('click', () => {
+            controls.autoRotate = !controls.autoRotate;
+            btnAutoRotate.classList.toggle('active', controls.autoRotate);
+            btnAutoRotate.textContent = controls.autoRotate ? '⏸️ Stop Putar' : '🔄 Putar Otomatis 360°';
+        });
+
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            setFov(78);
+            transitionTo(presets.entrance.pos, presets.entrance.target);
+        });
+
+        document.getElementById('toggle-outdoor').addEventListener('change', (e) => { groupOutdoor.visible = e.target.checked; });
+        document.getElementById('toggle-roof').addEventListener('change', (e) => { groupRoof.visible = !e.target.checked; });
+        document.getElementById('toggle-furniture').addEventListener('change', (e) => { groupFurniture.visible = e.target.checked; });
+        document.getElementById('toggle-dims').addEventListener('change', (e) => { groupDims.visible = e.target.checked; });
+
+        document.getElementById('btn-screenshot').addEventListener('click', () => {
+            renderer.render(scene, camera);
+            const a = document.createElement('a'); a.download = 'CAFE_ANJALAI_3D_REALISTIS.png'; a.href = renderer.domElement.toDataURL(); a.click();
+        });
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (isTransitioning) {
+                transitionProgress += 0.04;
+                const t = 1 - Math.pow(1 - Math.min(transitionProgress, 1), 3);
+                camera.position.lerpVectors(startPos, endPos, t);
+                controls.target.lerpVectors(startTarget, endTarget, t);
+                if (transitionProgress >= 1) {
+                    isTransitioning = false;
+                }
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>
