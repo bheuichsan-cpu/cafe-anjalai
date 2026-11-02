@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>3D Lokasi Riil Anjalai — Model Topografi & Fisik Eksisting (Air ke Dak: 7.6m)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #060911; color: #f1f5f9; overflow: hidden; width: 100vw; height: 100vh; touch-action: none; }
+        #canvas-container { width: 100%; height: 100%; display: block; position: absolute; top: 0; left: 0; z-index: 1; }
+        
+        .header-bar {
+            position: absolute; top: 12px; left: 16px; right: 16px;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 18px; background: rgba(15, 23, 42, 0.90); backdrop-filter: blur(16px);
+            border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 12px; z-index: 100;
+        }
+        .header-title h1 { font-size: 15px; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
+        .header-title p { font-size: 11px; color: #94a3b8; }
+        .badge-tag { display: inline-block; padding: 2px 8px; border-radius: 10px; background: #38bdf8; color: #000; font-weight: 700; font-size: 10px; }
+
+        .cam-dropdown {
+            position: absolute; top: 76px; left: 16px; width: 280px; z-index: 95;
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95));
+            border: 1.5px solid #38bdf8; border-radius: 10px; color: #ffffff;
+            padding: 10px 14px; font-size: 12px; font-weight: 600; cursor: pointer; outline: none;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+        }
+
+        .info-pill {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.92); border: 1px solid rgba(56, 189, 248, 0.4);
+            backdrop-filter: blur(14px); padding: 8px 18px; border-radius: 20px;
+            font-size: 11px; color: #cbd5e1; z-index: 90; display: flex; gap: 14px; align-items: center;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.6); white-space: nowrap;
+        }
+        .info-pill b { color: #38bdf8; }
+
+        @media (max-width: 768px) {
+            .header-bar { display: none; }
+            .cam-dropdown { top: 12px; left: 12px; width: calc(100% - 24px); }
+            .info-pill { bottom: 12px; font-size: 10px; padding: 6px 12px; width: calc(100% - 24px); overflow-x: auto; justify-content: space-between; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header-bar">
+        <div class="header-title">
+            <h1>🏔️ 3D Lokasi Riil Anjalai <span class="badge-tag">TOPOGRAFI EKSISTING</span></h1>
+            <p>Model Fisik Lapangan 1:1 Sebelum Kafe Dipasang | Elevasi: Danau (-7.6m) ➔ WC (3.4m) ➔ Dak (0.0m) ➔ Jalan (+2.15m)</p>
+        </div>
+    </div>
+
+    <select id="camera-select" class="cam-dropdown">
+        <option value="cam_front">🚁 1. Tampak Muka Danau (POV Drone 0007)</option>
+        <option value="cam_nadir">📐 2. Tampak Atas Ortofoto (Nadir Drone 0005)</option>
+        <option value="cam_road">🚗 3. Akses Jalan & Parkiran Atas (Drone 0010)</option>
+        <option value="cam_dak">🚶 4. Berdiri di Atas Dak Atap WC (Tapak Kafe)</option>
+        <option value="cam_shore">🌊 5. Bibir Pantai & Dasar Tebing Air (-7.6m)</option>
+        <option value="cam_free">🔄 6. Orbit Bebas 360°</option>
+    </select>
+
+    <div class="info-pill">
+        <span>🌊 <b>Muka Air:</b> -7.6m</span>
+        <span>🏔️ <b>Tebing Bawah:</b> 4.2m</span>
+        <span>🚪 <b>WC Eksisting:</b> 3.4m</span>
+        <span>📐 <b>Dak Atap:</b> 17.54 x 5.24m</span>
+        <span>🚗 <b>Dam/Talud Belakang:</b> 2.15m</span>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <script>
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xa0b4c8);
+        scene.fog = new THREE.Fog(0xa0b4c8, 80, 320);
+
+        const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 800);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.15;
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.08;
+        controls.maxDistance = 160.0;
+        controls.minDistance = 1.0;
+
+        // Camera Smooth Transition
+        let isTransitioning = false;
+        let transProgress = 0;
+        const startPos = new THREE.Vector3(), startTarget = new THREE.Vector3();
+        const endPos = new THREE.Vector3(), endTarget = new THREE.Vector3();
+
+        function transitionTo(pos, target) {
+            startPos.copy(camera.position); startTarget.copy(controls.target);
+            endPos.copy(pos); endTarget.copy(target);
+            transProgress = 0; isTransitioning = true;
+        }
+        controls.addEventListener('start', () => { isTransitioning = false; });
+
+        // World Skybox (Foto 360 Asli Danau Diatas)
+        const texLoader = new THREE.TextureLoader();
+        texLoader.load('PANORAMA_DANAU_DIATAS_DRONE.jpg', (droneTex) => {
+            droneTex.mapping = THREE.EquirectangularReflectionMapping;
+            scene.environment = droneTex;
+            
+            const domeGeo = new THREE.SphereGeometry(450, 48, 24);
+            domeGeo.scale(-1, 1, 1);
+            const domeMat = new THREE.MeshBasicMaterial({ map: droneTex, fog: false, depthWrite: false });
+            const dome = new THREE.Mesh(domeGeo, domeMat);
+            dome.position.set(8.77, 0, 5.0);
+            dome.rotation.y = -Math.PI * 0.48;
+            scene.add(dome);
+        });
+
+        // Sunlight & Ambient
+        const amb = new THREE.AmbientLight(0xffffff, 0.85); scene.add(amb);
+        const sun = new THREE.DirectionalLight(0xfffaed, 1.4);
+        sun.position.set(-20, 35, 25); sun.castShadow = true;
+        scene.add(sun);
+
+        // Materials
+        const matDak = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.85 }); // Beton cor abu-abu
+        const matWC = new THREE.MeshStandardMaterial({ color: 0xd1d5db, roughness: 0.75 });  // Dinding WC
+        const matDoorPink = new THREE.MeshStandardMaterial({ color: 0xf472b6, roughness: 0.45 }); // Pintu pink asli
+        const matDoorWhite = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.45 }); // Pintu putih asli
+        const matTalud = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.95 }); // Talud batu kali
+        const matCliff = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.90 }); // Tebing bawah
+        const matRoad = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.95 });  // Aspal jalan atas
+        const matWater = new THREE.MeshPhysicalMaterial({ color: 0x0891b2, roughness: 0.05, transmission: 0.85, transparent: true, opacity: 0.9 });
+
+        function box(w, h, d, x, y, z, mat) {
+            const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+            m.position.set(x + w/2, y + h/2, z + d/2);
+            m.castShadow = true; m.receiveShadow = true;
+            scene.add(m);
+            return m;
+        }
+
+        // ==========================================
+        // 1. DAK ATAP WC EKSISTING (Z = 0.00, H = 0.25m)
+        // ==========================================
+        // Main rectangle: 17.54m x 5.24m (Y: 0.0 to 5.24, Z: -0.25 to 0.0)
+        box(17.54, 0.25, 5.24, 0.0, -0.25, 0.0, matDak);
+        // Left notch / wing: 5.27m x 1.40m (X: -1.53 to 3.74, Y: -1.40 to 0.0)
+        box(5.27, 0.25, 1.40, -1.53, -0.25, -1.40, matDak);
+        // Parapet pembatas dak (H = 0.35m)
+        box(17.54, 0.35, 0.15, 0.0, 0.00, 5.09, matDak);
+        box(0.15, 0.35, 5.24, 17.39, 0.00, 0.0, matDak);
+
+        // ==========================================
+        // 2. BANGUNAN WC EKSISTING (TINGGI 3.4M: Y = -3.40 to -0.25)
+        // ==========================================
+        box(17.54, 3.15, 5.24, 0.0, -3.40, 0.0, matWC);
+        box(5.27, 3.15, 1.40, -1.53, -3.40, -1.40, matWC);
+
+        // Kolom Beton WC
+        for(let cx = 0; cx <= 17.5; cx += 2.2) {
+            box(0.35, 3.15, 0.35, Math.min(cx, 17.15), -3.40, 5.15, matDak);
+        }
+
+        // 8 Pintu Kompartemen WC Eksisting (Pink & Putih)
+        const doorPositions = [0.8, 2.8, 5.0, 7.2, 9.4, 11.6, 13.8, 15.8];
+        doorPositions.forEach((dx, i) => {
+            box(0.95, 2.20, 0.06, dx, -3.40, 5.24, (i % 2 === 0) ? matDoorPink : matDoorWhite);
+        });
+
+        // Teras Bawah di Depan Pintu WC (Lebar 1.4m, Y = -3.55)
+        box(18.50, 0.15, 1.40, -0.50, -3.55, 5.24, matDak);
+
+        // ==========================================
+        // 3. TEBING BAWAH WC KE AIR DANAU (TINGGI 4.2M: Y = -7.60 s/d -3.55)
+        // ==========================================
+        for(let step = 0; step < 7; step++) {
+            const frac = step / 6.0;
+            const y_top = -3.55 - (frac * 4.05);
+            const z_front = 5.24 + (frac * 3.50);
+            box(24.0, 0.60, 1.00, -3.0, y_top - 0.60, z_front, matCliff);
+        }
+
+        // Bebatuan Tepi Danau (Z = -7.6m)
+        [-2.0, 2.5, 6.0, 10.5, 14.0, 18.0, 21.0].forEach(bx => {
+            box(1.8, 0.8, 1.4, bx, -7.80, 8.8, matTalud);
+        });
+
+        // ==========================================
+        // 4. TALUD BELAKANG (H = 3.8M) & JALAN ATAS (Y = +3.8M)
+        // ==========================================
+        for(let t = 0; t < 6; t++) {
+            const frac_t = t / 5.0;
+            const y_talud = frac_t * 2.15;
+            const z_talud = - (frac_t * 1.60) - 0.40;
+            box(30.0, 0.65, 0.70, -7.0, y_talud, z_talud - 0.70, matTalud);
+        }
+
+        // Jalan Raya & Parkiran Mobil Atas (Y = +3.80m)
+        box(48.0, 0.30, 20.0, -15.0, 3.80, -21.80, matRoad);
+
+        // Tangga Batu Sisi Kiri (Turun dari Jalan +3.8m ke Dak 0.0m)
+        for(let s = 0; s < 12; s++) {
+            const frac_s = s / 11.0;
+            const sz = 2.15 - (frac_s * 2.15);
+            const sy = -3.00 + (frac_s * 2.80);
+            const sx = -2.80 - (frac_s * 0.50);
+            box(1.50, 0.32, 0.45, sx, sz - 0.32, sy, matTalud);
+        }
+
+        // ==========================================
+        // 5. PERMUKAAN AIR DANAU DIATAS (ELEVASI Y = -7.60M)
+        // ==========================================
+        const water = new THREE.Mesh(new THREE.PlaneGeometry(220, 180), matWater);
+        water.rotation.x = -Math.PI / 2;
+        water.position.set(8.77, -7.60, 50.0);
+        scene.add(water);
+
+        // Initial Camera Setup (View Front Facing Cafe Site)
+        const cameraPresets = {
+            cam_front: { pos: new THREE.Vector3(8.77, 8.0, 36.0), target: new THREE.Vector3(8.77, -2.0, 5.0) },
+            cam_nadir: { pos: new THREE.Vector3(8.77, 28.0, 2.62), target: new THREE.Vector3(8.77, 0.0, 2.62) },
+            cam_road:  { pos: new THREE.Vector3(-14.0, 9.5, -10.0), target: new THREE.Vector3(2.0, 0.0, 2.0) },
+            cam_dak:   { pos: new THREE.Vector3(8.77, 1.65, 2.62), target: new THREE.Vector3(8.77, 0.0, 20.0) },
+            cam_shore: { pos: new THREE.Vector3(8.77, -6.0, 22.0), target: new THREE.Vector3(8.77, -3.0, 5.0) },
+            cam_free:  { pos: new THREE.Vector3(22.0, 12.0, 26.0), target: new THREE.Vector3(8.77, -2.0, 4.0) }
+        };
+
+        camera.position.copy(cameraPresets.cam_front.pos);
+        controls.target.copy(cameraPresets.cam_front.target);
+
+        document.getElementById('camera-select').addEventListener('change', (e) => {
+            const p = cameraPresets[e.target.value];
+            if (p) transitionTo(p.pos, p.target);
+        });
+
+        // Animate
+        function animate() {
+            requestAnimationFrame(animate);
+            if (isTransitioning) {
+                transProgress += 0.035;
+                const t = Math.min(transProgress, 1.0);
+                const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+                camera.position.lerpVectors(startPos, endPos, ease);
+                controls.target.lerpVectors(startTarget, endTarget, ease);
+                if (transProgress >= 1.0) isTransitioning = false;
+            }
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
